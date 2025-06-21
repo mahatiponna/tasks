@@ -1,0 +1,61 @@
+import pandas as pd
+from fpdf import FPDF
+
+# ----------------------------
+# Read & Analyze Data
+# ----------------------------
+df = pd.read_csv("c:/5499/sample_data.csv")
+
+# Basic Summary
+total_units = df["Units_Sold"].sum()
+total_revenue = df["Revenue"].sum()
+avg_units = df["Units_Sold"].mean()
+avg_revenue = df["Revenue"].mean()
+
+# Group by Product
+product_summary = df.groupby("Product").agg({
+    "Units_Sold": ["sum", "mean"],
+    "Revenue": ["sum", "mean"]
+}).round(2)
+
+# ----------------------------
+# Create PDF Report
+# ----------------------------
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", 'B', 16)
+
+# Title
+pdf.cell(200, 10, txt="Sales Report", ln=True, align='C')
+
+# Summary Section
+pdf.set_font("Arial", size=12)
+pdf.ln(10)
+pdf.cell(200, 10, txt=f"Total Units Sold: {total_units}", ln=True)
+pdf.cell(200, 10, txt=f"Total Revenue: Rs.{total_revenue}", ln=True)
+pdf.cell(200, 10, txt=f"Average Units Sold: {avg_units:.2f}", ln=True)
+pdf.cell(200, 10, txt=f"Average Revenue: Rs.{avg_revenue:.2f}", ln=True)
+
+# Product-wise summary table
+pdf.ln(10)
+pdf.set_font("Arial", 'B', 12)
+pdf.cell(50, 10, "Product", 1)
+pdf.cell(40, 10, "Units (Sum)", 1)
+pdf.cell(40, 10, "Units (Avg)", 1)
+pdf.cell(40, 10, "Revenue (Sum)", 1)
+pdf.cell(40, 10, "Revenue (Avg)", 1)
+pdf.ln()
+
+pdf.set_font("Arial", size=12)
+for product, row in product_summary.iterrows():
+    pdf.cell(50, 10, product, 1)
+    pdf.cell(40, 10, str(row[("Units_Sold", "sum")]), 1)
+    pdf.cell(40, 10, str(row[("Units_Sold", "mean")]), 1)
+    pdf.cell(40, 10, "Rs." + str(row[("Revenue", "sum")]), 1)
+    pdf.cell(40, 10, "Rs." + str(row[("Revenue", "mean")]), 1)
+    pdf.ln()
+
+# Save PDF
+pdf.output("sales_report.pdf")
+
+print("PDF report generated as 'sales_report.pdf'")
